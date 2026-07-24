@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/voltmile/">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Compare the total cost of owning an EV versus a petrol vehicle over N years — from YOUR purchase prices, YOUR electricity tariff and fuel price, YOUR annual km — and see the exact break-even day. No live prices, nothing leaves your browser.">
+
+  <meta property="og:title" content="EV vs Petrol Cost Calculator — voltmile">
+  <meta property="og:description" content="Your prices, your tariff, your verdict. See when an EV recovers its price premium in fuel savings — the break-even day, circled.">
+  <meta property="og:type" content="website">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="voltmile">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>EV vs Petrol Total Cost of Ownership Calculator — voltmile</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+    #seo-landing { max-width: 760px; margin: 0 auto; padding: 24px 20px 8px; line-height: 1.55;
+      color: #10151f; background: #f2f5fa; }
+    #seo-landing h1 { font-size: 1.5rem; color: #1e4fd8; margin: 0 0 8px; line-height: 1.25; }
+    #seo-landing h2 { font-size: 1.05rem; margin: 20px 0 6px; }
+    #seo-landing code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 4px;
+      font-feature-settings: "tnum"; }
+    #seo-landing .muted { color: #515a6b; font-size: 0.92rem; }
+    #flutter-app { height: 82vh; min-height: 520px; border-top: 3px solid #1e4fd8; }
+    @media (prefers-color-scheme: dark) {
+      #seo-landing { color: #e6ecf5; background: #0a0e16; }
+      #seo-landing h1 { color: #4d7cfe; }
+      #seo-landing code { background: rgba(255,255,255,0.10); }
+      #seo-landing .muted { color: #9aa6bc; }
+    }
+  </style>
+
+  <!-- Crawlable structured data: the Flutter canvas is not indexable, so the
+       facts live in real HTML + JSON-LD. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "voltmile",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web, Windows, macOS, Linux, Android, iOS",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "description": "Compare EV vs petrol total cost of ownership over N years from your own prices, electricity tariff, fuel price, efficiency, maintenance and resale, and find the exact break-even day and distance. Ships no price data; runs fully in your browser."
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do you calculate whether an EV is cheaper than petrol?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Add up each option's total cost of ownership over your chosen horizon: purchase price + (annual km x years x cost per km) + (years x maintenance) - resale. EV cost per km = Wh/km x tariff / 1000; petrol cost per km = fuel price x 10 / (km per litre x 10). The cheaper total wins, and voltmile also marks the exact day the pricier-upfront option catches up." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the break-even point between an EV and a petrol vehicle?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It is when the running-cost savings have repaid the EV's higher purchase price. voltmile reports it two ways, each labelled: a break-even DAY (using annual saving = per-km delta x annual km + maintenance delta) and a distance-only break-even in KM (gap divided by the per-km delta, excluding maintenance and resale). The two differ on purpose, which is why each states its basis." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does voltmile use live fuel or electricity prices?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No — and it never will. Every price is entered by you, so the result reflects your city's tariff and your driving, not an OEM's optimistic defaults. You can look up official electricity tariffs from your state DISCOM and fuel prices from your oil marketing company, then type them in." }
+      },
+      {
+        "@type": "Question",
+        "name": "What does the savings percentage mean?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It is the lifetime saving as a share of the PETROL option's total cost of ownership (savings divided by petrol TCO). For example, saving Rs 32,800 against a petrol TCO of Rs 1,61,500 is 20.31%." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my data private?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. This web demo runs entirely in your browser and stores nothing on any server. The full app is local-first: your saved comparisons live in a SQLite file on your own machine and the app runs on localhost." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <main id="seo-landing">
+    <h1>EV vs Petrol Total Cost of Ownership Calculator — your prices, your tariff, your verdict</h1>
+    <p><strong>voltmile</strong> compares the true cost of owning an electric vehicle
+    versus a petrol one over the years you plan to keep it — using <strong>your</strong>
+    purchase prices, electricity tariff, fuel price, mileage, maintenance and resale — and
+    circles the <strong>exact break-even day</strong>. It ships <strong>no price data</strong>
+    and never fetches any: results are exactly as good as the numbers you enter.</p>
+
+    <h2>How the calculation works</h2>
+    <p>For each option, total cost of ownership is
+    <code>price + annual_km × years × cost_per_km + years × maintenance − resale</code>.
+    EV running cost is <code>Wh/km × tariff ÷ 1000</code> paise per km; petrol is
+    <code>fuel_price × 10 ÷ (km/L × 10)</code> paise per km. All money is held as integer
+    paise so nothing drifts by rounding.</p>
+
+    <h2>A worked example</h2>
+    <p>A scooter: EV <code>₹1,50,000</code> vs petrol <code>₹95,000</code>, 8,000 km/year for
+    5 years, electricity <code>₹8/kWh</code> at 35 Wh/km, petrol <code>₹105/L</code> at 50 km/L,
+    maintenance <code>₹1,500</code> vs <code>₹3,500</code>/year, resale <code>₹40,000</code> vs
+    <code>₹35,000</code>. voltmile computes EV running cost <code>₹0.28/km</code> vs petrol
+    <code>₹2.10/km</code>, total cost <code>₹1,28,700</code> vs <code>₹1,61,500</code> — a lifetime
+    saving of <code>₹32,800</code>, which is <strong>20.31%</strong> of the petrol option's total
+    cost. The EV breaks even on <strong>day 1213</strong> (about 30,220 km on a distance-only basis,
+    which excludes the maintenance saving and so differs from the day figure).</p>
+
+    <h2>What it deliberately leaves out</h2>
+    <p class="muted">No live prices, no loan/EMI interest, no fuel or tariff inflation, no
+    battery-degradation curves, no subsidy tables, and no depreciation prediction — resale is an
+    assumption you enter and label as one. This is arithmetic, not purchase advice; a rupee figure
+    cannot weigh range anxiety or charging access.</p>
+
+    <h2>Try it below</h2>
+    <p>The calculator below is loaded with a sample scooter comparison. Edit any field to make it
+    yours — nothing you type leaves this page.</p>
+  </main>
+
+  <div id="flutter-app"></div>
+
+  <script src="flutter.js" defer></script>
+  <script>
+    window.addEventListener('load', function () {
+      _flutter.loader.load({
+        onEntrypointLoaded: async function (engineInitializer) {
+          const appRunner = await engineInitializer.initializeEngine({
+            hostElement: document.getElementById('flutter-app')
+          });
+          await appRunner.runApp();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
